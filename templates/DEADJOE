@@ -1,0 +1,63 @@
+
+*** These modified files were found in JOE when it aborted on Mon May 20 20:44:11 2019
+*** JOE was aborted by UNIX signal 15
+
+*** File '(Unnamed)'
+log_multi
+multilabel_oaa
+test_vw_multi
+myImg
+320
+340
+previewimg
+suggest
+cameraModal
+imageModal
+
+*** File '(Unnamed)'
+re
+sys
+sys
+SCREEN_NAME
+startup
+exampleModal
+cameraModal
+facerect
+pic
+console
+meter
+
+*** File '(Unnamed)'
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+service.py
+service.py
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+index.html
+
+*** File '* Startup Log *'
+Processing '/etc/joe/joerc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/joerc

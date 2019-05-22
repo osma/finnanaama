@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Finnanaama</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="static/css/bootstrap.min.css">
+  <script src="static/js/jquery.min.js"></script>
+  <script src="static/js/bootstrap.min.js"></script>
+  <style type="text/css">
+    header { background-color: #723981; }
+    h1 { color: white; font-size: 2rem; }
+    
+    #video { width: 320px; height: 240px; }
+    #canvas { display: none; }
+    .camera { width: 340px; display: inline-block; }
+    .output { width: 340px; display: inline-block; }
+    #startbutton {
+      display: block;
+      position: relative;
+      margin-left: auto;
+      margin-right: auto;
+      bottom: 40px;
+      background-color: rgba(114, 57, 129, 0.5);
+      border: 1px solid white;
+      color: white;
+    }
+    
+    
+    #compare { width: 512px; margin: 1em 0; border: 1px solid #666666; }
+    #compare h2 { font-size: 1.2em; margin: 0.3em 0 0.2em 0; font-weight: bold; text-align: center }
+    #compare div.pic { width: 200px; height: 200px; overflow: hidden; display: inline-block; }
+    #compare div.result-controls { width: 100px; height: 200px; overflow: hidden; display: inline-block; font-size: 2em; }
+    .result-controls div { margin: auto; text-align: center; }
+    .result-controls a { display: block; padding: 5px; margin: auto; text-align: center; }
+    
+    .image-wrapper { position: relative; }
+    .info-icon { position: absolute; top: 5px; right: 10px; font-size: 1.5em; }
+    
+    
+  </style>
+  <script type="application/javascript">
+
+// The width and height of the captured photo. We will set the
+// width to the value defined here, but the height will be
+// calculated based on the aspect ratio of the input stream.
+
+var width = 320;    // We will scale the photo width to this
+var height = 0;     // This will be computed based on the input stream
+
+// |streaming| indicates whether or not we're currently streaming
+// video from the camera. Obviously, we start at false.
+
+var streaming = false;
+
+// The various HTML elements we need to configure or control. These
+// will be set by the startup() function.
+
+var video = null;
+var canvas = null;
+var previewimg = null;
+var startbutton = null;
+var cameraStarted = false;
+var currentResults = null;
+var currentResult = 0;
+
+function startupCamera() {
+  if (cameraStarted) { return; } // only need to startup once
+  video = document.getElementById('video');
+  canvas = document.getElementById('canvas');
+  previewimg = document.getElementById('previewimg');
+  startbutton = document.getElementById('startbutton');
+
+  navigator.mediaDevices.getUserMedia({video: true, audio: false})
+  .then(function(stream) {
+    video.srcObject = stream;
+    video.play();
+  })
+  .catch(function(err) {
+    console.log("An error occurred: " + err);
+  });
+
+  video.addEventListener('canplay', function(ev){
+    if (!streaming) {
+      height = video.videoHeight / (video.videoWidth/width);
+    
+      // Firefox currently has a bug where the height can't be read from
+      // the video, so we will make assumptions if this happens.
+    
+      if (isNaN(height)) {
+        height = width / (4/3);
+      }
+    
+      video.setAttribute('width', width);
+      video.setAttribute('height', height);
+      canvas.setAttribute('width', width);
+      canvas.setAttribute('height', height);
+      streaming = true;
+    }
+  }, false);
+
+  startbutton.addEventListener('click', function(ev){
+    takepicture();
+    ev.preventDefault();
+  }, false);
+  
+  cameraStarted = true;
+}
+
+function dataURItoBlob(dataURI) {
+    // convert base64/URLEncoded data component to raw binary data held in a string
+    var byteString;
+    if (dataURI.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(dataURI.split(',')[1]);
+    else
+        byteString = unescape(dataURI.split(',')[1]);
+
+    // separate out the mime component
+    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length);
+    for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+
+    return new Blob([ia], {type:mimeString});
+}
+
+// Capture a photo by fetching the current contents of the video
+// and drawing it into a canvas, then converting that to a PNG
+// format data URL. By drawing it on an offscreen canvas and then
+// drawing that to the screen, we can change its size and/or apply
+// other changes before drawing it.
+
+function takepicture() {
+  var context = canvas.getContext('2d');
+  if (width && height) {
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(video, 0, 0, width, height);
+  
+    var data = canvas.toDataURL('image/png');
+    var blob = dataURItoBlob(data);
+    submitImage(blob);
+  }
+  $('#cameraModal').modal('hide')
+}
+
+function showResult(idx) {
+  if (idx < 0) {
+    idx = 0;
+  }
+  if (idx >= currentResults.similar.length) {
+    idx = currentResults.similar.length - 1;
+  }
+  currentResult = idx;
+  document.getElementById('result-number').textContent = currentResult + 1;
+  var sim = currentResults.similar[idx];
+  console.log(sim);
+  $('#compare').show();
+  var reslink = document.getElementById('resultlink');
+  reslink.href = sim.pageurl;
+  var fullimg = document.getElementById('fullimage');
+  fullimg.src = sim.imgurl;
+  document.getElementById('imageModalLabel').textContent = sim.title;
+  document.getElementById('imageBuilding').textContent = sim.buildings;
+  document.getElementById('imageYear').textContent = sim.year;
+  var resimg = document.getElementById('resultimg');
+  resimg.src = sim.imgurl;
+  resimg.onload = function() {
+      var sl = sim.location;
+      var faceWidth = sl[1] - sl[3];
+      var targetWidth = 200;
+      var scale = targetWidth / faceWidth;
+      $(this).css('height', this.naturalHeight * scale);
+      $(this).css('width', this.naturalWidth * scale);
+      $(this).css('margin-top', `-${sl[0]*scale}px`);
+      $(this).css('margin-left', `-${sl[3]*scale}px`);
+  }
+}
+
+function submitImage(file) {
+    var formData = new FormData();
+    formData.append("imagefile", file);
+    jQuery.ajax({
+        url: 'similar',
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false,
+        type: 'POST',
+        success: function (result) {
+            // display the face identified from the input image
+            var img = document.getElementById('previewimg');
+            var targetWidth = 200;
+            var reader = new FileReader();
+            reader.onload = (function(myImg) { 
+                return function(e) { 
+                    myImg.src = e.target.result;
+                    myImg.onload = function() {
+                        var l = result.location;
+                        var faceWidth = l[1] - l[3];
+                        var scale = targetWidth / faceWidth;
+                        $(this).css('height', this.naturalHeight * scale);
+                        $(this).css('width', this.naturalWidth * scale);
+                        $(this).css('margin-top', `-${l[0]*scale}px`);
+                        $(this).css('margin-left', `-${l[3]*scale}px`);
+                    };
+                    
+                };
+            })(img);
+            reader.readAsDataURL(file);
+
+            // update total number of results
+            document.getElementById('result-total').textContent = result.similar.length;
+
+            // show the first result
+            currentResults = result;
+            showResult(0);
+        }
+    });
+
+}
+
+function handleImage(files) {
+    submitImage(files[0]);
+}
+
+$(document).ready(function() {
+  $('#compare').hide();
+
+  $('#cameraModal').on('shown.bs.modal', function (e) {
+    startupCamera();
+  })
+
+  $('#imageModal').on('shown.bs.modal', function (e) {
+  })
+  
+  $('#next').click(function() {
+    showResult(currentResult + 1);
+  });
+  $('#prev').click(function() {
+    showResult(currentResult - 1);
+  });
+});
+    
+  </script>
+</head>
+<body>
+
+<header class="mb-4 mt-0">
+  <div class="container">
+    <h1 class="py-3">Finnanaama</h1>
+  </div>
+</header>
+
+
+<div class="container">
+
+  <!-- Modal popup for the camera view -->
+  <div class="modal fade" id="cameraModal" tabindex="-1" role="dialog" aria-labelledby="cameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cameraModalLabel">Kuva kameralta</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Sulje">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="camera">
+            <video id="video">Videokuvaa ei saatavilla.</video>
+            <button id="startbutton">Ota kuva</button> 
+          </div>
+          <canvas id="canvas">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal popup for the full image view -->
+  <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">image title goes here</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Sulje">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><span id="imageBuilding">building</span>, <span id="imageYear">year</span></p>
+          <div class="image-wrapper">
+            <a href="#" id="resultlink" target="_blank">
+              <span class="info-icon">🛈 <small>Kuva Finnassa</small></span>
+              <img src="#" id="fullimage" class="img-fluid">
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <p class="lead">Minkälainen Finnanaama sinulla on?</p>
+
+      
+      <form method="POST" enctype="multipart/form-data" action="similar">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cameraModal">
+          Ota kuva kameralla
+        </button>
+        
+        tai 
+
+        <label class="btn btn-primary">
+          <input id="imagefile" name="imagefile" type="file" accept="image/*"
+                 capture="user" onchange="handleImage(this.files)">
+        </label>
+      </form>
+
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="col-md-8">
+      <div id="compare">
+        <h2>Hehän ovat kuin kaksi marjaa</h2>
+        <div class="pic">
+          <img id="previewimg" src="">
+        </div>
+        <div class="pic image-wrapper">
+          <a href="#" data-toggle="modal" data-target="#imageModal"><span class="info-icon">🛈</span><img id="resultimg" src=""></a>
+        </div>
+        <div class="result-controls">
+          <div><a href="#" id="prev">▲</a></div>
+          <div><span id="result-number">1</span>/<span id="result-total">100</span></div>
+          <div><a href="#" id="next">▼</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
