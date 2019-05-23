@@ -10,7 +10,7 @@ import PIL
 from flask import Flask, render_template, jsonify, request, redirect
 
 app = Flask(__name__)
-faces = numpy.load('faces.npy')
+faces = numpy.load('faces.npy', allow_pickle=True)
 encodings = numpy.array([face[2] for face in faces])
 records = {}
 
