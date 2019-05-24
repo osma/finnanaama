@@ -29,13 +29,14 @@
     
     #compare { border: 1px solid #666666; max-width: 512px; margin: 0; }
     #compare h2 { font-size: 1.2em; margin: 0.3em 0 0.2em 0; font-weight: bold; text-align: center }
-    #compare div.pic { width:200px; height: 200px; overflow: hidden; display: inline-block; }
-    #compare div.result-controls { overflow: hidden; display: inline-block; font-size: 1.5em; }
+    #compare div.pic { max-width: 40%; width:200px; height: 200px; overflow: hidden; display: inline-block; }
+    #compare div.result-controls { max-width: 20%; overflow: hidden; display: inline-block; font-size: 1.5em; }
     .result-controls div { margin: auto; text-align: center; }
     .result-controls a { display: block; padding: 5px; margin: auto; text-align: center; }
     
     .image-wrapper { position: relative; }
     .info-icon { position: absolute; top: 5px; right: 10px; font-size: 1.5em; }
+    a .info-icon { color: white; text-shadow: 2px 2px 4px #000000; }
     
     
   </style>
@@ -173,6 +174,7 @@ function showResult(idx) {
       var faceWidth = sl[1] - sl[3];
       var container = document.getElementById('resultdiv');
       var targetWidth = container.getBoundingClientRect().width;
+      $(container).css('height', targetWidth);
       var scale = targetWidth / faceWidth;
       $(this).css('height', this.naturalHeight * scale);
       $(this).css('width', this.naturalWidth * scale);
@@ -200,6 +202,7 @@ function submitImage(file) {
                 return function(e) { 
                     var container = document.getElementById('previewdiv');
                     var targetWidth = container.getBoundingClientRect().width;
+                    $(container).css('height', targetWidth);
                     myImg.src = e.target.result;
                     myImg.onload = function() {
                         var l = result.location;
@@ -302,7 +305,7 @@ $(document).ready(function() {
           <p><span id="imageBuilding">building</span>, <span id="imageYear">year</span></p>
           <div class="image-wrapper">
             <a href="#" id="resultlink" target="_blank">
-              <span class="info-icon">🛈 <small>Kuva Finnassa</small></span>
+              <span class="info-icon">&#9432;<small>Kuva Finnassa</small></span>
               <img src="#" id="fullimage" class="img-fluid">
             </a>
           </div>
@@ -335,16 +338,16 @@ $(document).ready(function() {
   </div>
 
 
-  <div class="row" id="compare">
+  <div class="row no-gutters" id="compare">
     <div class="col-md-12">
       <h2>Hehän ovat kuin kaksi marjaa</h2>
 
-      <div class="row align-items-center">
+      <div class="row align-items-center no-gutters">
         <div class="col-md-5 pic" id="previewdiv">
           <img id="previewimg" src="">
         </div>
         <div class="col-md-5 pic image-wrapper" id="resultdiv">
-          <a href="#" data-toggle="modal" data-target="#imageModal"><span class="info-icon">🛈</span><img id="resultimg" src=""></a>
+          <a href="#" data-toggle="modal" data-target="#imageModal"><span class="info-icon">&#9432;</span><img id="resultimg" src=""></a>
         </div>
         <div class="col-md-2 result-controls">
           <div><a href="#" id="prev">▲</a></div>
