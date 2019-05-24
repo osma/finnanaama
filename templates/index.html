@@ -171,7 +171,8 @@ function showResult(idx) {
   resimg.onload = function() {
       var sl = sim.location;
       var faceWidth = sl[1] - sl[3];
-      var targetWidth = 200;
+      var container = document.getElementById('resultdiv');
+      var targetWidth = container.getBoundingClientRect().width;
       var scale = targetWidth / faceWidth;
       $(this).css('height', this.naturalHeight * scale);
       $(this).css('width', this.naturalWidth * scale);
@@ -193,10 +194,12 @@ function submitImage(file) {
         success: function (result) {
             // display the face identified from the input image
             var img = document.getElementById('previewimg');
-            var targetWidth = 200;
+
             var reader = new FileReader();
             reader.onload = (function(myImg) { 
                 return function(e) { 
+                    var container = document.getElementById('previewdiv');
+                    var targetWidth = container.getBoundingClientRect().width;
                     myImg.src = e.target.result;
                     myImg.onload = function() {
                         var l = result.location;
@@ -230,7 +233,7 @@ function handleImage(files) {
 $(document).ready(function() {
   var cameraSupported = 'mediaDevices' in navigator;
   if(!cameraSupported) {
-    $('#cameraButton').hide();
+    $('.camera-button').hide();
   }
 
   $('#compare').hide();
@@ -315,13 +318,12 @@ $(document).ready(function() {
       
       <form method="POST" enctype="multipart/form-data" action="similar">
 
-        <div id="cameraButton">
-          <!-- Button trigger modal -->
-          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cameraModal">
-            Ota kuva kameralla
-          </button>
-          tai
-        </div>
+        <!-- Button to trigger camera modal -->
+        <button type="button" class="btn btn-primary camera-button" data-toggle="modal" data-target="#cameraModal">
+          Ota kuva kameralla
+        </button>
+
+        <span class="camera-button">tai</span>
 
         <label class="btn btn-primary">
           <input id="imagefile" name="imagefile" type="file" accept="image/*"
@@ -337,10 +339,10 @@ $(document).ready(function() {
     <div class="col-md-8">
       <div id="compare">
         <h2>Hehän ovat kuin kaksi marjaa</h2>
-        <div class="pic">
+        <div class="pic" id="previewdiv">
           <img id="previewimg" src="">
         </div>
-        <div class="pic image-wrapper">
+        <div class="pic image-wrapper" id="resultdiv">
           <a href="#" data-toggle="modal" data-target="#imageModal"><span class="info-icon">🛈</span><img id="resultimg" src=""></a>
         </div>
         <div class="result-controls">
