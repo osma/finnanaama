@@ -228,6 +228,11 @@ function handleImage(files) {
 }
 
 $(document).ready(function() {
+  var cameraSupported = 'mediaDevices' in navigator;
+  if(!cameraSupported) {
+    $('#cameraButton').hide();
+  }
+
   $('#compare').hide();
 
   $('#cameraModal').on('shown.bs.modal', function (e) {
@@ -309,12 +314,14 @@ $(document).ready(function() {
 
       
       <form method="POST" enctype="multipart/form-data" action="similar">
-        <!-- Button trigger modal -->
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cameraModal">
-          Ota kuva kameralla
-        </button>
-        
-        tai 
+
+        <div id="cameraButton">
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#cameraModal">
+            Ota kuva kameralla
+          </button>
+          tai
+        </div>
 
         <label class="btn btn-primary">
           <input id="imagefile" name="imagefile" type="file" accept="image/*"
